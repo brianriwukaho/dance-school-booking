@@ -1,0 +1,135 @@
+service: dance-school-booking
+
+frameworkVersion: '4'
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  stage: ${opt:stage, 'dev'}
+  region: ap-southeast-2
+  environment:
+    STAGE: ${self:provider.stage}
+    DYNAMODB_TABLE_CLASSES: ${self:service}-classes-${self:provider.stage}
+    DYNAMODB_TABLE_BOOKINGS: ${self:service}-bookings-${self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - !GetAtt ClassesTable.Arn
+            - !GetAtt BookingsTable.Arn
+            - !Sub '${ClassesTable.Arn}/index/*'
+            - !Sub '${BookingsTable.Arn}/index/*'
+
+functions:
+  searchClasses:
+    handler: dist/src/handlers/search-classes.handler
+    events:
+      - http:
+          path: /classes/search
+          method: post
+          cors: true
+
+  getClass:
+    handler: dist/src/handlers/get-class.handler
+    events:
+      - http:
+          path: /classes/{classId}
+          method: get
+          cors: true
+
+  bookClass:
+    handler: dist/src/handlers/book-class.handler
+    events:
+      - http:
+          path: /classes/{classId}/book
+          method: post
+          cors: true
+
+resources:
+  Resources:
+    ClassesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_CLASSES}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: classId
+            AttributeType: S
+          - AttributeName: type
+            AttributeType: S
+          - AttributeName: dateTime
+            AttributeType: S
+        KeySchema:
+          - AttributeName: classId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: TypeDateTimeIndex
+            KeySchema:
+              - AttributeName: type
+                KeyType: HASH
+              - AttributeName: dateTime
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    BookingsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.DYNAMODB_TABLE_BOOKINGS}
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: bookingId
+            AttributeType: S
+          - AttributeName: classId
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: bookingId
+            KeyType: HASH
+        GlobalSecondaryIndexes:
+          - IndexName: ClassEmailIndex
+            KeySchema:
+              - AttributeName: classId
+                KeyType: HASH
+              - AttributeName: email
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ClassIndex
+            KeySchema:
+              - AttributeName: classId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-dynamodb
+  - serverless-offline
+
+custom:
+  dynamodb:
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: true
+      seed: true
+      convertEmptyValues: true
+    seed:
+      domain:
+        sources:
+          - table: ${self:provider.environment.DYNAMODB_TABLE_CLASSES}
+            sources: [./seed-data/classes.json]

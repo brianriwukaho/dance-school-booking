@@ -11,19 +11,16 @@ export class DateTime extends ValueObject<DateTimeProps> {
   }
 
   protected validate(props: DateTimeProps): void {
-    // Validate date format (YYYY-MM-DD)
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(props.date)) {
       throw new ArgumentInvalidException('Date must be in YYYY-MM-DD format');
     }
 
-    // Validate time format (HH:mm)
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
     if (!timeRegex.test(props.startTime)) {
       throw new ArgumentInvalidException('Time must be in HH:mm format (00:00-23:59)');
     }
 
-    // Validate that the date is actually valid
     const dateObj = new Date(props.date);
     if (isNaN(dateObj.getTime())) {
       throw new ArgumentInvalidException('Invalid date');

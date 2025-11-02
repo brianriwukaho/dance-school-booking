@@ -7,7 +7,8 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "deploy": "turbo run deploy"
+    "deploy": "turbo run deploy",
+    "postinstall": "cd apps/api && pnpm dynamodb:install || echo 'Warning: DynamoDB Local installation failed. Run: cd apps/api && pnpm dynamodb:install'"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

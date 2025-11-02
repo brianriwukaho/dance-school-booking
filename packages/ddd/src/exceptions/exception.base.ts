@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 export interface SerializedException {
   message: string;
-  code: string;
+  name: string;
   correlationId: string;
   stack?: string;
   cause?: string;
@@ -13,8 +13,6 @@ export interface SerializedException {
  * Base class for custom exceptions.
  */
 export abstract class ExceptionBase extends Error {
-  abstract code: string;
-
   public readonly correlationId: string;
 
   /**
@@ -35,7 +33,7 @@ export abstract class ExceptionBase extends Error {
   toJSON(): SerializedException {
     return {
       message: this.message,
-      code: this.code,
+      name: this.constructor.name,
       stack: this.stack,
       correlationId: this.correlationId,
       cause: JSON.stringify(this.cause),

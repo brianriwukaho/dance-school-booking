@@ -1,6 +1,5 @@
 import { ArgumentNotProvidedException } from './exceptions/index.js';
 import { Guard } from './guard.js';
-import { convertPropsToObject } from './utils/convert-props-to-object.util.js';
 
 /**
  * Domain Primitive is an object that contains only a single value
@@ -12,6 +11,28 @@ export interface DomainPrimitive<T extends Primitives | Date> {
 
 type ValueObjectProps<T> = T extends Primitives | Date ? DomainPrimitive<T> : T;
 
+/**
+ * Value Object base class.
+ *
+ * A Value Object is an immutable domain object that represents a descriptive aspect
+ * of the domain. Unlike entities, value objects have no identity - they are defined
+ * entirely by their attributes.
+ *
+ * Key characteristics:
+ * - Immutable - properties cannot be changed after creation
+ * - No identity - equality is based on structural comparison of all properties
+ * - Interchangeable - two value objects with the same values are considered identical
+ * - Self-validating - ensures invariants are maintained at construction
+ * - Side-effect free - methods return new instances rather than modifying state
+ *
+ * Value objects represent domain concepts that are best defined by what they are,
+ * not who they are (e.g., Email, Money, Address, DateRange).
+ *
+ * Use value objects to:
+ * - Encapsulate validation logic for domain concepts
+ * - Make implicit concepts explicit in your domain model
+ * - Reduce primitive obsession in your codebase
+ */
 export abstract class ValueObject<T> {
   protected readonly props: ValueObjectProps<T>;
 
@@ -45,9 +66,7 @@ export abstract class ValueObject<T> {
       return this.props.value;
     }
 
-    const propsCopy = convertPropsToObject(this.props);
-
-    return Object.freeze(propsCopy);
+    return Object.freeze(this.props as T);
   }
 
   private checkIfEmpty(props: ValueObjectProps<T>): void {

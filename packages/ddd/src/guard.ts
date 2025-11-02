@@ -29,34 +29,4 @@ export class Guard {
 
     return false;
   }
-
-  /**
-   * Checks length range of a provided number/string/array
-   */
-  static lengthIsBetween(
-    value: number | string | Array<unknown>,
-    min: number,
-    max: number,
-  ): boolean {
-    if (Guard.isEmpty(value)) {
-      throw new Error(
-        'Cannot check length of a value. Provided value is empty',
-      );
-    }
-    const valueLength =
-      typeof value === 'number'
-        ? Number(value).toString().length
-        : value.length;
-    if (valueLength >= min && valueLength <= max) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Checks if value is a positive number
-   */
-  static isPositiveNumber(value: unknown): boolean {
-    return typeof value === 'number' && value > 0;
-  }
 }

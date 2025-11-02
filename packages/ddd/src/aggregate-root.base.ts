@@ -1,59 +1,34 @@
-import { Entity, CreateEntityProps, BaseEntityProps } from './entity.base.js';
-
-export interface AggregateRootProps {
-  version: number;
-}
-
-export interface CreateAggregateRootProps<T> extends CreateEntityProps<T> {
-  version?: number;
-}
+import { Entity, CreateEntityProps } from "./entity.base.js";
 
 /**
- * Aggregate Root base class with optimistic locking support.
+ * Aggregate Root base class.
  *
- * The version field is used for optimistic locking when persisting changes.
- * When updating an aggregate, the repository should check that the version
- * in the database matches the version in memory, and increment it atomically.
- * This prevents lost updates in concurrent scenarios.
+ * An Aggregate Root is an Entity that serves as the entry point to an aggregate.
+ * It enforces invariants across all entities within its aggregate boundary.
+ *
+ * Key responsibilities:
+ * - Enforce business rules and invariants for the entire aggregate
+ * - Control access to entities within the aggregate
+ * - Ensure consistency of the aggregate as a whole
+ *
+ * The aggregate root is the only entity that external objects can hold references to.
  */
-export abstract class AggregateRoot<Props extends AggregateRootProps> extends Entity<Props> {
-  private _version: number;
-
-  constructor(props: CreateAggregateRootProps<Props>) {
+export abstract class AggregateRoot<Props, IdType> extends Entity<Props, IdType> {
+  constructor(props: CreateEntityProps<Props, IdType>) {
     super(props);
-    this._version = props.version ?? 0;
   }
 
-  get version(): number {
-    return this._version;
-  }
-
-  /**
-   * Increment version for optimistic locking.
-   * This should be called by the repository after a successful update.
-   */
-  public incrementVersion(): void {
-    this._version++;
-  }
-
-  /**
-   * Override getProps to include version
-   */
-  public override getProps(): Props & BaseEntityProps & AggregateRootProps {
-    return {
-      ...super.getProps(),
-      version: this._version,
-    } as Props & BaseEntityProps & AggregateRootProps;
-  }
-
-  /**
-   * Override toObject to include version
-   */
-  public override toObject(): unknown {
-    const baseObject = super.toObject() as Record<string, unknown>;
-    return {
-      ...baseObject,
-      version: this._version,
-    };
-  }
+  // In a more complex problem space, we might add methods here to manage
+  // transactions, domain events, or other cross-cutting concerns
+  // relevant to aggregate roots.
+  //
+  // But for now a straightforward extension of Entity suffices.
+  //
+  // The scale of this ballet class means we do not need the resiliency
+  // and data consistency benefits that typically incur async boundaries.
+  //
+  // Example placeholder for domain event handling:
+  // private _domainEvents: DomainEvent[] = [];
+  // ...
+  // protected addEvent, public clearEvents, public async publishEvents, etc
 }

@@ -10,14 +10,20 @@
     "remove": "serverless remove",
     "clean": "rm -rf dist .serverless",
     "check-types": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:api": "tsx scripts/test-cli.ts",
     "dynamodb:install": "serverless dynamodb install",
     "dynamodb:start": "serverless dynamodb start",
     "dynamodb:remove": "serverless dynamodb remove",
+    "dynamodb:admin": "dynamodb-admin -p 8001",
     "seed:generate": "tsx scripts/generate-seed-data.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.709.0",
     "@aws-sdk/lib-dynamodb": "^3.709.0",
+    "@badrap/result": "^0.3.1",
     "@repo/ddd": "workspace:*",
     "@repo/dtos": "workspace:*",
     "zod": "^3.25.32"
@@ -26,10 +32,16 @@
     "@repo/typescript-config": "workspace:*",
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^22.14.0",
-    "serverless": "^4.6.0",
+    "@vitest/ui": "^2.1.8",
+    "chalk": "^5.4.1",
+    "dynamodb-admin": "^5.1.3",
+    "inquirer": "^12.3.0",
+    "serverless": "^3.38.0",
     "serverless-dynamodb": "^0.2.54",
-    "serverless-offline": "^14.5.0",
+    "serverless-offline": "^13.8.1",
     "serverless-plugin-typescript": "^2.1.5",
-    "typescript": "^5.8.2"
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.2",
+    "vitest": "^2.1.8"
   }
 }

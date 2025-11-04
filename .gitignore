@@ -8,6 +8,7 @@ dist
 .next
 out
 build
+.build
 .serverless
 
 # Debug
@@ -39,3 +40,6 @@ coverage
 
 # DynamoDB Local
 .dynamodb
+
+# Serverless plugin artifacts
+apps/api/apps

@@ -1,16 +1,15 @@
 service: dance-school-booking
 
-frameworkVersion: '4'
+frameworkVersion: '3'
 
 provider:
   name: aws
-  runtime: nodejs22.x
+  runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
   region: ap-southeast-2
   environment:
     STAGE: ${self:provider.stage}
-    DYNAMODB_TABLE_CLASSES: ${self:service}-classes-${self:provider.stage}
-    DYNAMODB_TABLE_BOOKINGS: ${self:service}-bookings-${self:provider.stage}
+    DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
   iam:
     role:
       statements:
@@ -23,14 +22,12 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
           Resource:
-            - !GetAtt ClassesTable.Arn
-            - !GetAtt BookingsTable.Arn
-            - !Sub '${ClassesTable.Arn}/index/*'
-            - !Sub '${BookingsTable.Arn}/index/*'
+            - !GetAtt MainTable.Arn
+            - !Sub '${MainTable.Arn}/index/*'
 
 functions:
   searchClasses:
-    handler: dist/src/handlers/search-classes.handler
+    handler: dist/handlers/search-classes.handler
     events:
       - http:
           path: /classes/search
@@ -38,7 +35,7 @@ functions:
           cors: true
 
   getClass:
-    handler: dist/src/handlers/get-class.handler
+    handler: dist/handlers/get-class.handler
     events:
       - http:
           path: /classes/{classId}
@@ -46,7 +43,7 @@ functions:
           cors: true
 
   bookClass:
-    handler: dist/src/handlers/book-class.handler
+    handler: dist/handlers/book-class.handler
     events:
       - http:
           path: /classes/{classId}/book
@@ -55,59 +52,32 @@ functions:
 
 resources:
   Resources:
-    ClassesTable:
+    MainTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${self:provider.environment.DYNAMODB_TABLE_CLASSES}
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
         BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
-          - AttributeName: classId
+          - AttributeName: PK
             AttributeType: S
-          - AttributeName: type
+          - AttributeName: SK
             AttributeType: S
-          - AttributeName: dateTime
+          - AttributeName: GSI1PK
             AttributeType: S
-        KeySchema:
-          - AttributeName: classId
-            KeyType: HASH
-        GlobalSecondaryIndexes:
-          - IndexName: TypeDateTimeIndex
-            KeySchema:
-              - AttributeName: type
-                KeyType: HASH
-              - AttributeName: dateTime
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-
-    BookingsTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: ${self:provider.environment.DYNAMODB_TABLE_BOOKINGS}
-        BillingMode: PAY_PER_REQUEST
-        AttributeDefinitions:
-          - AttributeName: bookingId
-            AttributeType: S
-          - AttributeName: classId
-            AttributeType: S
-          - AttributeName: email
+          - AttributeName: GSI1SK
             AttributeType: S
         KeySchema:
-          - AttributeName: bookingId
+          - AttributeName: PK
             KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
         GlobalSecondaryIndexes:
-          - IndexName: ClassEmailIndex
+          - IndexName: GSI1
             KeySchema:
-              - AttributeName: classId
+              - AttributeName: GSI1PK
                 KeyType: HASH
-              - AttributeName: email
+              - AttributeName: GSI1SK
                 KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
-          - IndexName: ClassIndex
-            KeySchema:
-              - AttributeName: classId
-                KeyType: HASH
             Projection:
               ProjectionType: ALL
 
@@ -131,5 +101,5 @@ custom:
     seed:
       domain:
         sources:
-          - table: ${self:provider.environment.DYNAMODB_TABLE_CLASSES}
+          - table: ${self:provider.environment.DYNAMODB_TABLE}
             sources: [./seed-data/classes.json]

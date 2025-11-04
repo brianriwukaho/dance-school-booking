@@ -25,7 +25,5 @@ export const docClient = DynamoDBDocumentClient.from(dynamoDbClient, {
   },
 });
 
-export const TABLES = {
-  CLASSES: process.env.DYNAMODB_TABLE_CLASSES || 'dance-school-booking-classes-dev',
-  BOOKINGS: process.env.DYNAMODB_TABLE_BOOKINGS || 'dance-school-booking-bookings-dev',
-};
+export const TABLE_NAME = process.env.DYNAMODB_TABLE || 'dance-school-booking-dev';
+export const GSI1_NAME = 'GSI1';

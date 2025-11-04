@@ -11,8 +11,9 @@
       "persistent": true,
       "dependsOn": ["^build"]
     },
-    "lint": {
-      "inputs": ["$TURBO_DEFAULT$", ".eslintrc*", "eslint.config.*"]
+    "dynamodb:admin": {
+      "cache": false,
+      "persistent": true
     },
     "check-types": {
       "dependsOn": ["^build"],
@@ -20,7 +21,7 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "jest.config.*"],
+      "inputs": ["$TURBO_DEFAULT$", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
     "deploy": {

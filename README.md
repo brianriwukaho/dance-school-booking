@@ -122,17 +122,14 @@ pnpm dynamodb:install
 From the root directory, run:
 
 ```bash
-turbo run dev
+pnpm dev
 ```
 
-This command:
-- Builds all packages (`@repo/ddd`, `@repo/dtos`, `@repo/typescript-config`)
-- Generates seed data for the next 4 weeks
-- Starts DynamoDB Local on port 8000
-- Starts Serverless Offline on port 3000
-- Auto-seeds the classes table
+This starts two tasks in parallel (each in its own pane in turbo's TUI):
+- **dev**: Builds packages, generates seed data, starts DynamoDB Local (port 8000) and Serverless Offline (port 3000)
+- **dynamodb:admin**: Starts DynamoDB Admin UI (port 8001)
 
-**Important:** Always run `turbo run dev` from the root to ensure packages are built and seed data is generated before starting the API.
+**Important:** Always run `pnpm dev` from the root to ensure packages are built and seed data is generated before starting the API.
 
 ## API Endpoints
 
@@ -417,20 +414,15 @@ The CLI provides interactive prompts to:
 
 ### DynamoDB Admin
 
-Inspect database state during development:
+The DynamoDB Admin UI is automatically started when you run `turbo run dev` and is accessible at http://localhost:8001
 
-```bash
-cd apps/api
-pnpm dynamodb:admin
-```
-
-Opens admin UI at http://localhost:8001
+You can use it to inspect tables, view items, and debug data during development.
 
 ## Development Commands
 
 ```bash
 # Root commands (run from project root)
-turbo run dev       # Build packages, generate seed data, start API
+pnpm dev            # Build packages, generate seed data, start API + DynamoDB Admin
 pnpm build          # Build all packages
 pnpm check-types    # Type check all packages
 
@@ -440,7 +432,6 @@ pnpm test:watch     # Run tests in watch mode
 pnpm test:ui        # Open Vitest UI
 pnpm test:cli       # Interactive testing CLI
 pnpm seed:generate  # Generate seed data
-pnpm dynamodb:admin # Open DynamoDB Admin UI (port 8001)
 ```
 
 ## Technical Highlights

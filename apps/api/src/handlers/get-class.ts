@@ -1,46 +1,41 @@
-import type { APIGatewayProxyHandler } from 'aws-lambda';
-import { GetClassResponseDTO } from '@repo/dtos';
-import { ClassRepository } from '../infrastructure/repositories/class.repository.js';
-import { successResponse, errorResponse, mapExceptionToStatusCode } from './utils/api-response.js';
-import { ExceptionBase, NotFoundException } from '@repo/ddd';
+import type { APIGatewayProxyHandler } from "aws-lambda";
+import { GetClassService } from "../modules/booking/queries/get-class/get-class.service.js";
+import { ClassRepository } from "../modules/booking/database/repositories/class.repository.js";
+import { successResponse, errorResponse } from "./utils/api-response.js";
+import { ArgumentNotProvidedException } from "@repo/ddd";
 
 const classRepository = new ClassRepository();
+const service = new GetClassService(classRepository);
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   try {
     const classId = event.pathParameters?.classId;
-
     if (!classId) {
-      throw new NotFoundException('Class ID is required');
+      throw new ArgumentNotProvidedException(
+        "Missing required path parameter: classId"
+      );
     }
 
-    // Fetch class
-    const classAggregate = await classRepository.findById(classId);
+    const decodedClassId = decodeURIComponent(classId);
 
-    if (!classAggregate) {
-      throw new NotFoundException(`Class with ID ${classId} not found`);
+    const result = await service.execute(decodedClassId);
+
+    if (result.isErr) {
+      return errorResponse(result.error);
     }
 
-    // Map to DTO
-    const props = classAggregate.getProps();
-    const response: GetClassResponseDTO = {
-      id: typeof props.id === 'string' ? props.id : String(props.id),
-      type: classAggregate.classType.type,
-      level: classAggregate.classType.level,
-      date: classAggregate.dateTime.date,
-      startTime: classAggregate.dateTime.startTime,
-      maxSpots: classAggregate.maxSpots,
-      spotsRemaining: classAggregate.spotsRemaining,
-    };
+    console.log("Class retrieved successfully:", {
+      classId: decodedClassId,
+    });
 
-    return successResponse(200, response);
-  } catch (error) {
-    console.error('Error in get-class handler:', error);
+    return successResponse(200, result.value);
+  } catch (error: unknown) {
+    console.error("Unexpected error in get-class handler:", error);
 
-    if (error instanceof ExceptionBase) {
-      return errorResponse(mapExceptionToStatusCode(error), error);
+    if (error instanceof Error) {
+      return errorResponse(error);
     }
 
-    return errorResponse(500, error as Error);
+    return errorResponse(new Error(String(error)));
   }
 };

@@ -10,6 +10,7 @@ out
 build
 .build
 .serverless
+classes.json
 
 # Debug
 npm-debug.log*

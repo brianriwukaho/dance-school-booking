@@ -48,17 +48,17 @@ export class BookClassService {
   private async executeCommand(
     command: BookClassCommand
   ): Promise<Result<BookClassResponseDTO, ExceptionBase>> {
-    const classAggregate = await this.classRepository.findById(command.classId);
+    const classWithVersion = await this.classRepository.findById(command.classId);
 
-    if (!classAggregate) {
+    if (!classWithVersion) {
       return Result.err(new ClassNotFoundException(command.classId));
     }
 
     const email = new Email(command.email);
 
-    const booking = classAggregate.book(email);
+    const booking = classWithVersion.aggregate.book(email);
 
-    const saveResult = await this.classRepository.save(classAggregate);
+    const saveResult = await this.classRepository.save(classWithVersion);
 
     if (saveResult.isErr) {
       return Result.err(saveResult.error);

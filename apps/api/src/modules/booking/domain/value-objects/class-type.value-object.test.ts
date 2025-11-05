@@ -94,31 +94,25 @@ describe('ClassType Value Object', () => {
 
   describe('business rules', () => {
     it('should enforce salsa level constraints (1-3)', () => {
-      // Valid levels
       expect(() => new ClassType('salsa', 1)).not.toThrow();
       expect(() => new ClassType('salsa', 2)).not.toThrow();
       expect(() => new ClassType('salsa', 3)).not.toThrow();
 
-      // Invalid levels
       expect(() => new ClassType('salsa', 0)).toThrow();
       expect(() => new ClassType('salsa', 4)).toThrow();
     });
 
     it('should enforce bachata level constraints (1-2)', () => {
-      // Valid levels
       expect(() => new ClassType('bachata', 1)).not.toThrow();
       expect(() => new ClassType('bachata', 2)).not.toThrow();
 
-      // Invalid levels
       expect(() => new ClassType('bachata', 0)).toThrow();
       expect(() => new ClassType('bachata', 3)).toThrow();
     });
 
     it('should enforce reggaeton no-level constraint', () => {
-      // Valid: no level
       expect(() => new ClassType('reggaeton')).not.toThrow();
 
-      // Invalid: has level
       expect(() => new ClassType('reggaeton', 1)).toThrow();
     });
   });

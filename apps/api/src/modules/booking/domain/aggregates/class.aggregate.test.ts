@@ -71,10 +71,8 @@ describe('Class Aggregate', () => {
       const email1 = new Email('user1@example.com');
       const email2 = new Email('user2@example.com');
 
-      // Book the only spot
       classAggregate.book(email1);
 
-      // Try to book when full
       expect(() => {
         classAggregate.book(email2);
       }).toThrow(ClassFullyBookedException);
@@ -84,10 +82,8 @@ describe('Class Aggregate', () => {
       const classAggregate = createTestClass();
       const email = new Email('user@example.com');
 
-      // Book once
       classAggregate.book(email);
 
-      // Try to book again with same email
       expect(() => {
         classAggregate.book(email);
       }).toThrow(DuplicateBookingException);
@@ -203,18 +199,13 @@ describe('Class Aggregate', () => {
 
   describe('concurrency simulation', () => {
     it('should demonstrate the need for optimistic locking', () => {
-      // This test demonstrates why we need optimistic locking in the repository layer
-      const classAggregate = createTestClass(1); // Only 1 spot
-
-      // Simulate two concurrent requests trying to book the last spot
+      const classAggregate = createTestClass(1);
       const email1 = new Email('user1@example.com');
       const email2 = new Email('user2@example.com');
 
-      // First booking succeeds (in-memory)
       const booking1 = classAggregate.book(email1);
       expect(booking1).toBeDefined();
 
-      // Second booking would fail in-memory (correct behavior)
       expect(() => {
         classAggregate.book(email2);
       }).toThrow(ClassFullyBookedException);

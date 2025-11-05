@@ -18,7 +18,6 @@ export const classDTOSchema = z.object({
 
 export type ClassDTO = z.infer<typeof classDTOSchema>;
 
-// Search Classes
 export const searchClassesRequestDTOSchema = z.object({
   type: classTypeDTOSchema.default('any'),
 });
@@ -31,6 +30,5 @@ export const searchClassesResponseDTOSchema = z.object({
 
 export type SearchClassesResponseDTO = z.infer<typeof searchClassesResponseDTOSchema>;
 
-// Get Class
 export const getClassResponseDTOSchema = classDTOSchema;
 export type GetClassResponseDTO = z.infer<typeof getClassResponseDTOSchema>;

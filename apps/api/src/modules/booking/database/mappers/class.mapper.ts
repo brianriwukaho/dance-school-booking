@@ -39,7 +39,18 @@ export interface BookingItem {
 
 /**
  * Wrapper to carry domain object alongside persistence metadata.
- * Version is a persistence concern, not a domain concern.
+ *
+ * Version is a persistence concern, not a domain concern, so we keep it
+ * separate from the aggregate using this wrapper pattern.
+ *
+ * Flow:
+ * 1. Repository loads from DB → returns ClassWithVersion {aggregate, version: N}
+ * 2. Service modifies aggregate → classWithVersion.aggregate.book(email)
+ * 3. Repository saves to DB → uses version N for optimistic locking
+ *
+ * This keeps version in request scope (no cache needed) and prevents it from
+ * polluting the domain model. Version travels with the aggregate through the
+ * request lifecycle, then gets garbage collected when the request ends.
  */
 export interface ClassWithVersion {
   aggregate: Class;
@@ -91,7 +102,6 @@ export class ClassMapper {
       Booking.create(new Email(item.SK), new Date(item.bookedAt))
     );
 
-    // Validate consistency if bookings are provided
     if (
       bookingItems.length > 0 &&
       bookingItems.length !== metadataItem.bookingCount
@@ -125,13 +135,12 @@ export class ClassMapper {
    * Returns metadata item and booking items.
    */
   static toPersistence(
-    classAggregate: Class,
-    currentVersion: number
+    classWithVersion: ClassWithVersion
   ): {
     metadata: ClassMetadataItem;
     bookings: BookingItem[];
   } {
-    const props = classAggregate.getProps();
+    const props = classWithVersion.aggregate.getProps();
     const pk = props.id.toString();
     const date = props.dateTime.date;
     const startTime = props.dateTime.startTime;
@@ -152,7 +161,7 @@ export class ClassMapper {
       startTime,
       maxSpots: props.maxSpots,
       bookingCount: props.bookings.length,
-      version: currentVersion,
+      version: classWithVersion.version,
       createdAt: props.createdAt.toISOString(),
       updatedAt: props.updatedAt.toISOString(),
     };

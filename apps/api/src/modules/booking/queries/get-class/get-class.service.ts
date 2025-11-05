@@ -15,13 +15,13 @@ export class GetClassService {
     const query = new GetClassQuery(classId);
 
     try {
-      const classAggregate = await this.classRepository.findById(query.classId);
+      const classWithVersion = await this.classRepository.findById(query.classId);
 
-      if (!classAggregate) {
+      if (!classWithVersion) {
         return Result.err(new ClassNotFoundException(query.classId));
       }
 
-      const props = classAggregate.getProps();
+      const props = classWithVersion.aggregate.getProps();
       const response: GetClassResponseDTO = {
         id: typeof props.id === 'string' ? props.id : String(props.id),
         type: props.classType.type,
@@ -29,7 +29,7 @@ export class GetClassService {
         date: props.dateTime.date,
         startTime: props.dateTime.startTime,
         maxSpots: props.maxSpots,
-        spotsRemaining: classAggregate.spotsRemaining,
+        spotsRemaining: classWithVersion.aggregate.spotsRemaining,
       };
 
       return Result.ok(response);

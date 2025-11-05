@@ -30,7 +30,5 @@ export class Booking extends ValueObject<BookingProps> {
     return this.props.bookedAt;
   }
 
-  protected validate(props: BookingProps): void {
-    // Email validation is handled by the Email value object
-  }
+  protected validate(props: BookingProps): void {}
 }

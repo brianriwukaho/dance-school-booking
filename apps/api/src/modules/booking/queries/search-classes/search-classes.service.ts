@@ -33,10 +33,10 @@ export class SearchClassesService {
   }
 
   private async executeQuery(query: SearchClassesQuery): Promise<Result<SearchClassesResponseDTO, ExceptionBase>> {
-    const classes = await this.classRepository.findByType(query.type);
+    const classesWithVersion = await this.classRepository.findByType(query.type);
 
-    const classDTOs: ClassDTO[] = classes.map((classAggregate) => {
-      const props = classAggregate.getProps();
+    const classDTOs: ClassDTO[] = classesWithVersion.map((classWithVersion) => {
+      const props = classWithVersion.aggregate.getProps();
       const classDTO: ClassDTO = {
         id: typeof props.id === 'string' ? props.id : String(props.id),
         type: props.classType.type,
@@ -44,7 +44,7 @@ export class SearchClassesService {
         date: props.dateTime.date,
         startTime: props.dateTime.startTime,
         maxSpots: props.maxSpots,
-        spotsRemaining: classAggregate.spotsRemaining,
+        spotsRemaining: classWithVersion.aggregate.spotsRemaining,
       };
       return classDTO;
     });

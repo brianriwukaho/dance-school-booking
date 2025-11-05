@@ -15,12 +15,13 @@ import {
   DuplicateBookingException,
   InvalidBookingRequestException,
 } from '../../exceptions/booking.exceptions.js';
+import { ClassWithVersion } from '../../database/mappers/class.mapper.js';
 
 describe('BookClassService', () => {
   let service: BookClassService;
   let mockRepository: ClassRepository;
 
-  const createMockClass = (bookingsCount: number = 0, maxSpots: number = 20) => {
+  const createMockClass = (bookingsCount: number = 0, maxSpots: number = 20): ClassWithVersion => {
     const classAggregate = Class.create({
       id: ClassId.create('2025-11-10', DayOfWeek.MON, ClassTime.TIME_1830),
       props: {
@@ -37,7 +38,7 @@ describe('BookClassService', () => {
       classAggregate.book(email);
     }
 
-    return classAggregate;
+    return { aggregate: classAggregate, version: 1 };
   };
 
   beforeEach(() => {
@@ -52,8 +53,8 @@ describe('BookClassService', () => {
 
   describe('execute', () => {
     it('should successfully book a class when spots are available', async () => {
-      const classAggregate = createMockClass(0, 20);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(0, 20);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
       vi.spyOn(mockRepository, 'save').mockResolvedValue(Result.ok(undefined));
 
       const result = await service.execute('CLASS#2025-11-10#MON#1830', { email: 'user@example.com' });
@@ -66,7 +67,7 @@ describe('BookClassService', () => {
         });
         expect(result.value.bookedAt).toBeDefined();
       }
-      expect(mockRepository.save).toHaveBeenCalledWith(classAggregate);
+      expect(mockRepository.save).toHaveBeenCalledWith(classWithVersion);
     });
 
     it('should return error when class does not exist', async () => {
@@ -82,8 +83,8 @@ describe('BookClassService', () => {
     });
 
     it('should return error when class is full', async () => {
-      const classAggregate = createMockClass(20, 20);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(20, 20);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
 
       const result = await service.execute('550e8400-e29b-41d4-a716-446655440000', { email: 'newuser@example.com' });
 
@@ -96,11 +97,11 @@ describe('BookClassService', () => {
     });
 
     it('should return error when email already has a booking', async () => {
-      const classAggregate = createMockClass(0, 20);
+      const classWithVersion = createMockClass(0, 20);
       const existingEmail = new Email('duplicate@example.com');
-      classAggregate.book(existingEmail);
+      classWithVersion.aggregate.book(existingEmail);
 
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
 
       const result = await service.execute('550e8400-e29b-41d4-a716-446655440000', { email: 'duplicate@example.com' });
 
@@ -113,8 +114,8 @@ describe('BookClassService', () => {
     });
 
     it('should validate email format', async () => {
-      const classAggregate = createMockClass(0, 20);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(0, 20);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
 
       const result = await service.execute('550e8400-e29b-41d4-a716-446655440000', { email: 'invalid-email' });
 
@@ -125,34 +126,34 @@ describe('BookClassService', () => {
     });
 
     it('should handle booking the last available spot', async () => {
-      const classAggregate = createMockClass(19, 20);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(19, 20);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
       vi.spyOn(mockRepository, 'save').mockResolvedValue(Result.ok(undefined));
 
       const result = await service.execute('550e8400-e29b-41d4-a716-446655440000', { email: 'lastuser@example.com' });
 
       expect(result.isOk).toBe(true);
-      expect(classAggregate.spotsRemaining).toBe(0);
+      expect(classWithVersion.aggregate.spotsRemaining).toBe(0);
       expect(mockRepository.save).toHaveBeenCalled();
     });
 
     it('should call repository.save with updated aggregate', async () => {
-      const classAggregate = createMockClass(0, 20);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(0, 20);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
       const saveSpy = vi.spyOn(mockRepository, 'save').mockResolvedValue(Result.ok(undefined));
 
       await service.execute('550e8400-e29b-41d4-a716-446655440000', { email: 'user@example.com' });
 
       expect(saveSpy).toHaveBeenCalledOnce();
-      expect(saveSpy).toHaveBeenCalledWith(classAggregate);
-      expect(classAggregate.getProps().bookings).toHaveLength(1);
+      expect(saveSpy).toHaveBeenCalledWith(classWithVersion);
+      expect(classWithVersion.aggregate.getProps().bookings).toHaveLength(1);
     });
   });
 
   describe('optimistic locking simulation', () => {
     it('should demonstrate repository layer handles concurrent bookings', async () => {
-      const classAggregate = createMockClass(0, 1);
-      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classAggregate);
+      const classWithVersion = createMockClass(0, 1);
+      vi.spyOn(mockRepository, 'findById').mockResolvedValue(classWithVersion);
 
       vi.spyOn(mockRepository, 'save').mockResolvedValueOnce(Result.ok(undefined));
 
